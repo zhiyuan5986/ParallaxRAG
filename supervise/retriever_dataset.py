@@ -39,10 +39,11 @@ class RetrieverDataset:
         dataset_name,
         split
     ):
+        data_root = os.environ.get('PARALLAX_DATA_ROOT', '/data')
         # BioASQ uses JSON files under proc_resolved.
         if dataset_name.lower() == 'bioasq':
             processed_file = os.path.join(
-                f'/data/BioASQ/proc_resolved/{split}.json')
+                data_root, f'BioASQ/proc_resolved/{split}.json')
             if not os.path.exists(processed_file):
                 raise FileNotFoundError(
                     f"BioASQ processed file not found: {processed_file}\n"
@@ -55,7 +56,7 @@ class RetrieverDataset:
         else:
             # Default: load .pkl from processed directory.
             processed_file = os.path.join(
-                f'/data/{dataset_name}/processed/{split}.pkl')
+                data_root, f'{dataset_name}/processed/{split}.pkl')
             with open(processed_file, 'rb') as f:
                 return pickle.load(f)
 
@@ -154,11 +155,12 @@ class RetrieverDataset:
         split,
         processed_dict_list
     ):
+        data_root = os.environ.get('PARALLAX_DATA_ROOT', '/data')
         # BioASQ uses capitalized path.
         if dataset_name.lower() == 'bioasq':
-            save_dir = os.path.join('/data/BioASQ/triple_scores')
+            save_dir = os.path.join(data_root, 'BioASQ/triple_scores')
         else:
-            save_dir = os.path.join('/data', dataset_name, 'triple_scores')
+            save_dir = os.path.join(data_root, dataset_name, 'triple_scores')
         os.makedirs(save_dir, exist_ok=True)
         save_file = os.path.join(save_dir, f'{split}.pth')
 
@@ -336,11 +338,12 @@ class RetrieverDataset:
         text_encoder_name,
         split
     ):
+        data_root = os.environ.get('PARALLAX_DATA_ROOT', '/data')
         # BioASQ uses capitalized path.
         if dataset_name.lower() == 'bioasq':
-            file_path = f'/data/BioASQ/emb/{text_encoder_name}/{split}.pth'
+            file_path = os.path.join(data_root, 'BioASQ', 'emb', text_encoder_name, f'{split}.pth')
         else:
-            file_path = f'/data/{dataset_name}/emb/{text_encoder_name}/{split}.pth'
+            file_path = os.path.join(data_root, dataset_name, 'emb', text_encoder_name, f'{split}.pth')
 
         if not os.path.exists(file_path):
             raise FileNotFoundError(

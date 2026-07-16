@@ -208,10 +208,15 @@ def main():
     config = copy.deepcopy(HARDCODED_CONFIG)
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dataset', choices=['webqsp', 'cwq', 'bioasq'], default=config['dataset']['name'])
+    parser.add_argument('--output-dir', help='Directory in which to write cpt.pth')
+    parser.add_argument('--epochs', type=int, help='Override the configured epoch count')
+    parser.add_argument('--device', help='Torch device, e.g. cuda:0 or cpu')
     args = parser.parse_args()
     config['dataset']['name'] = args.dataset
     config['train']['save_prefix'] = args.dataset
-    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+    if args.epochs is not None:
+        config['train']['num_epochs'] = args.epochs
+    device = torch.device(args.device or ('cuda:0' if torch.cuda.is_available() else 'cpu'))
     set_seed(config['env']['seed'])
     torch.set_num_threads(config['env']['num_threads'])
 
@@ -264,11 +269,12 @@ def main():
 
     # Logging & Saving
     ts = time.strftime('%b%d-%H:%M:%S')
-    save_dir = f"{config['train']['save_prefix']}_{ts}"
+    save_dir = args.output_dir or f"{config['train']['save_prefix']}_{ts}"
     os.makedirs(save_dir, exist_ok=True)
     swanlab.init(project=f"{config['dataset']['name']}_retriever", experiment_name=save_dir, config=config)
 
-    best = 0.0
+    # Always persist the first evaluated model, even when recall is exactly zero.
+    best = float('-inf')
     patient = 0
     for epoch in range(config['train']['num_epochs']):
         try:

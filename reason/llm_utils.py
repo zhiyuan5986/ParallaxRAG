@@ -4,7 +4,7 @@ import openai
 from vllm import LLM, SamplingParams
 from openai import OpenAI
 from functools import partial
-from prompts import icl_user_prompt, icl_ass_prompt
+from reason.prompts import icl_user_prompt, icl_ass_prompt
 
 
 def _resolve_local_model_path(model_name: str):
