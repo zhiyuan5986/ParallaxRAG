@@ -21,7 +21,7 @@ def main():
 
     # 1) processed files (entity align + ids)
     if dataset_name == 'bioasq':
-        base_dir = "/data/BioASQ"
+        base_dir = os.path.join(os.environ.get('PARALLAX_DATA_ROOT', '/data'), 'BioASQ')
         proc_dir = os.path.join(base_dir, 'proc_resolved')
         processed_train = os.path.join(proc_dir, 'train.json')
         processed_val = None  # BioASQ has no validation split
@@ -29,7 +29,7 @@ def main():
         print(f"[INFO] Using BioASQ processed files: train={processed_train}, test={processed_test}")
         print(f"[INFO] Note: BioASQ has no validation set")
     else:
-        base_dir = f"/data/{dataset_name}"
+        base_dir = os.path.join(os.environ.get('PARALLAX_DATA_ROOT', '/data'), dataset_name)
         processed_dir = os.path.join(base_dir, 'processed')
         # Build processed pickles from HuggingFace if requested
         if args.build_pkl:

@@ -4,10 +4,8 @@ We use this file to obtain all the metrics in our paper except the Hit metric.
 """
 
 
-import sys
-sys.path.append('../')
-from preprocess.prepare_data import get_data
-from preprocess.prepare_prompts import unique_preserve_order
+from reason.preprocess.prepare_data import get_data
+from reason.preprocess.prepare_prompts import unique_preserve_order
 
 import argparse
 import glob

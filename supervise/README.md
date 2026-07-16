@@ -35,7 +35,8 @@ The preprocessing output is produced by:
 supervise/preprocess_embeddings.py
 ```
 
-The pipeline uses absolute paths under /data. Make sure the dataset layout
+The pipeline uses `/data` by default. Set `PARALLAX_DATA_ROOT` (or use the
+top-level reproduction script's `--data-root`) to relocate it. Make sure the dataset layout
 matches the following structure:
 
 ```
@@ -63,24 +64,19 @@ python supervise/preprocess_retriever.py -d webqsp --build_pkl
 python supervise/train_retriever.py -d webqsp
 ```
 
-3) Evaluate a checkpoint
+3) Run inference
 ```
-python supervise/eval_from_cpt.py --cpt_path <path_to_cpt> --split val
-```
-
-4) Run inference
-```
-python supervise/inference.py --cpt_path <path_to_cpt> --split test
+python -m supervise.inference --path <path_to_cpt> --split test --output retrieval_result.pth
 ```
 
-5) Run retrieval evaluation
+4) Run retrieval evaluation
 ```
 python supervise/eval_retrieval.py --cpt_path <path_to_cpt> --split test
 ```
 
 Configuration Notes
 -------------------
-- Default config values are in supervise/train_retriever_config.py.
+- Default config values are in `supervise/config.py`.
 - Training uses the dataset name to set save_prefix and to locate data under /data.
 - The retriever requires multi-head embeddings (q_head_embs, entity_head_embs,
   relation_head_embs). Make sure preprocessing generates them.

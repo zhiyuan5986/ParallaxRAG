@@ -7,29 +7,30 @@ import argparse
 from tqdm import tqdm
 from pathlib import Path
 
-from preprocess.prepare_data import get_data
-from preprocess.prepare_prompts import get_prompts_for_data
+from reason.preprocess.prepare_data import get_data
+from reason.preprocess.prepare_prompts import get_prompts_for_data
+from reason.llm_utils import llm_init, llm_inf_all
 
-from metrics.evaluate_results_corrected import eval_results as eval_results_corrected
-from metrics.evaluate_results import eval_results as eval_results_original
+from reason.metrics.evaluate_results_corrected import eval_results as eval_results_corrected
+from reason.metrics.evaluate_results import eval_results as eval_results_original
 
 
 def get_defined_prompts(prompt_mode, model_name, llm_mode):
     if 'gpt' in model_name or 'gpt' in prompt_mode:
         if 'gptLabel' in prompt_mode:
-            from prompts import sys_prompt_gpt, cot_prompt_gpt
+            from reason.prompts import sys_prompt_gpt, cot_prompt_gpt
             return sys_prompt_gpt, cot_prompt_gpt
         else:
-            from prompts import icl_sys_prompt, icl_cot_prompt
+            from reason.prompts import icl_sys_prompt, icl_cot_prompt
             return icl_sys_prompt, icl_cot_prompt
     elif 'noevi' in prompt_mode:
-        from prompts import noevi_sys_prompt, noevi_cot_prompt
+        from reason.prompts import noevi_sys_prompt, noevi_cot_prompt
         return noevi_sys_prompt, noevi_cot_prompt
     elif 'icl' in llm_mode:
-        from prompts import icl_sys_prompt, icl_cot_prompt
+        from reason.prompts import icl_sys_prompt, icl_cot_prompt
         return icl_sys_prompt, icl_cot_prompt
     else:
-        from prompts import sys_prompt, cot_prompt
+        from reason.prompts import sys_prompt, cot_prompt
         return sys_prompt, cot_prompt
 
 
@@ -93,6 +94,9 @@ def main():
                         choices=['cwq', 'webqsp'], help="Dataset name")
     parser.add_argument("--prompt_mode", type=str, default="scored_100", help="Prompt mode")
     parser.add_argument("-p", "--score_dict_path", type=str)
+    parser.add_argument('--rog-predictions', help='RoG predictions JSONL used to assemble reasoning prompts')
+    parser.add_argument('--output-dir', help='Directory for reasoning predictions')
+    parser.add_argument('--max-samples', type=int, default=None, help='Optional debugging limit; default processes all samples')
     parser.add_argument("--llm_mode", type=str, default="sys_icl_dc", help="LLM mode")
     parser.add_argument("-m", "--model_name", type=str, default="meta-llama/Meta-Llama-3.1-8B-Instruct", help="Model name")
     # parser.add_argument("--model_name", type=str, default="gpt-4o", help="Model name")
@@ -123,7 +127,7 @@ def main():
     gpu_memory_utilization = args.gpu_memory_utilization
     max_num_seqs = args.max_num_seqs
 
-    pred_file_path = f"./results/KGQA/{dataset_name}/RoG/{split}/results_gen_rule_path_RoG-{dataset_name}_RoG_{split}_predictions_3_False_jsonl/predictions.jsonl"
+    pred_file_path = args.rog_predictions or f"./results/KGQA/{dataset_name}/RoG/{split}/results_gen_rule_path_RoG-{dataset_name}_RoG_{split}_predictions_3_False_jsonl/predictions.jsonl"
     run_name = f"{model_name}-{prompt_mode}-{llm_mode}-{frequency_penalty}-thres_{thres}-{split}"
     run = swanlab.init(project=f"RAG-{dataset_name}", name=run_name, config=vars(args))
 
@@ -137,7 +141,7 @@ def main():
     else:
         score_dict_path = args.score_dict_path
 
-    raw_pred_folder_path = Path(f"./results/KGQA/{dataset_name}/SubgraphRAG/{args.model_name.split('/')[-1]}")
+    raw_pred_folder_path = Path(args.output_dir or f"./results/KGQA/{dataset_name}/SubgraphRAG/{args.model_name.split('/')[-1]}")
     raw_pred_folder_path.mkdir(parents=True, exist_ok=True)
     raw_pred_file_path = raw_pred_folder_path / f"{prompt_mode}-{llm_mode}-{frequency_penalty}-thres_{thres}-{split}-predictions-resume.jsonl"
 
@@ -197,8 +201,8 @@ def main():
                             os.remove(tmp_eval_file_path)
                     except Exception:
                         pass
-            if processed_count >= 1000:
-                print(f"Reached target of {processed_count} items (>= 1000). Stopping inference loop.")
+            if args.max_samples is not None and processed_count >= args.max_samples:
+                print(f"Reached --max-samples={args.max_samples}. Stopping inference loop.")
                 break
             # if processed_count == 500:
             #     break

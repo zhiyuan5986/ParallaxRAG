@@ -115,7 +115,7 @@ def rerank_with_multihead_features(final_scores, head_logits, q_emb,
     return rerank_top_scores, U_sorted.tolist()
 @torch.no_grad()
 def main(args):
-    device = torch.device(f'cuda:0')
+    device = torch.device(args.device or ('cuda:0' if torch.cuda.is_available() else 'cpu'))
 
     cpt = torch.load(args.path, map_location='cpu')
     config = cpt['config']
@@ -123,7 +123,7 @@ def main(args):
     torch.set_num_threads(config['env']['num_threads'])
 
     infer_set = RetrieverDataset(
-        config=config, split='test', skip_no_path=False)
+        config=config, split=args.split, skip_no_path=False)
 
     emb_size = infer_set[0]['q_emb'].shape[-1]
     # Infer num_heads/head_dim to match training-time settings.
@@ -247,11 +247,10 @@ def main(args):
 
     # Save structured results.
     root_path = os.path.dirname(args.path)
-    result_path = os.path.join(root_path, 'retrieval_result.pth')
+    result_path = args.output or os.path.join(root_path, 'retrieval_result.pth')
+    os.makedirs(os.path.dirname(os.path.abspath(result_path)), exist_ok=True)
     torch.save(pred_dict, result_path)
-
-    root_path = os.path.dirname(args.path)
-    torch.save(pred_dict, os.path.join(root_path, 'retrieval_result.pth'))
+    print(f'Retrieval results written to {result_path}')
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
@@ -268,6 +267,9 @@ if __name__ == '__main__':
     parser.add_argument('--rerank_weights', type=str, default='base=1.0,hmax=0.2,hcov=0.1,rel=0.1,path=0.1',
                         help='Rerank weights, comma-separated (e.g., "base=1.0,hmax=0.2,hcov=0.1,rel=0.1,path=0.1")')
     parser.add_argument('--log_path', type=str, default=None, help='If set, write detailed head-hop logs to this path')
+    parser.add_argument('--split', choices=['train', 'val', 'test'], default='test')
+    parser.add_argument('--device', help='Torch device, e.g. cuda:0 or cpu')
+    parser.add_argument('-o', '--output', help='Output .pth path')
     args = parser.parse_args()
 
     main(args)

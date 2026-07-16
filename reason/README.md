@@ -38,17 +38,17 @@ Quick Start
 -----------
 Run an end-to-end CWQ test inference:
 ```
-python reason/main.py -d cwq --split test --prompt_mode scored_100 --llm_mode sys_icl_dc
+python -m reason.main -d cwq --split test --prompt_mode scored_100 --llm_mode sys_icl_dc
 ```
 
 Run WebQSP with a local vLLM model:
 ```
-python reason/main.py -d webqsp --split test -m meta-llama/Meta-Llama-3.1-8B-Instruct
+python -m reason.main -d webqsp --split test -m meta-llama/Meta-Llama-3.1-8B-Instruct
 ```
 
 Use a custom scored triples file:
 ```
-python reason/main.py -d cwq --split test -p ./scored_triples/my_scores.pth
+python -m reason.main -d cwq --split test -p ./scored_triples/my_scores.pth
 ```
 
 Prompt Modes and LLM Modes

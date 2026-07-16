@@ -59,11 +59,11 @@ def build_processed_pickles(save_dir: str, dataset_name: str = 'webqsp') -> None
     # Choose dataset
     if dataset_name.lower() == 'cwq':
         hf_name = 'rmanluo/RoG-cwq'
-        base_dir = '/data/cwq'
+        base_dir = os.path.join(os.environ.get('PARALLAX_DATA_ROOT', '/data'), 'cwq')
 
     else:
         hf_name = 'ml1996/webqsp'
-        base_dir = '/data/webqsp'
+        base_dir = os.path.join(os.environ.get('PARALLAX_DATA_ROOT', '/data'), 'webqsp')
 
     # Load HF dataset (question/answer/q_entity/a_entity/graph)
     train_set = load_dataset(hf_name, split='train')
